@@ -37,14 +37,31 @@
 ```
 .
 ├── .gitignore          # Specifies intentionally untracked files that Git should ignore
-├── config.py           # Configuration for transcription mode, model IDs, API keys, etc.
-├── main.py             # Main script to run the transcription and diarization pipeline
-├── requirements.txt    # Python dependencies
+├── pyproject.toml      # Defines package metadata, dependencies, and build system
+├── README.md           # This file
 ├── .env.example        # Example for environment variables (OpenAI API Key, Hugging Face Token)
-├── harvard.wav/        # Sample audio file directory (contains harvard.wav)
-│   └── harvard.wav
 ├── output/             # Default directory for CSV outputs (ignored by Git)
-└── README.md           # This file
+├── src/
+│   └── whispercast/
+│       ├── __init__.py     # Makes 'whispercast' a package
+│       ├── cli.py          # Command-line interface logic
+│       ├── config.py       # Configuration for transcription mode, models, etc.
+│       ├── core/
+│       │   ├── __init__.py # Makes 'core' a sub-package
+│       │   ├── transcription.py # Transcription logic
+│       │   ├── diarization.py   # Diarization logic
+│       │   └── processing.py    # Logic for processing and combining results
+│       └── sample_data/
+│           └── harvard.wav # Sample audio file
+├── tests/                # Directory for pytest tests
+│   ├── __init__.py
+│   ├── test_cli.py
+│   └── core/
+│       ├── __init__.py
+│       ├── test_transcription.py
+│       ├── test_diarization.py
+│       └── test_processing.py
+└── requirements.txt    # List of dependencies (primarily for reference, pyproject.toml is canonical)
 ```
 
 ---
@@ -63,7 +80,7 @@
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/mohameddhameem/WhisperCast
+    git clone https://github.com/your-username/WhisperCast # Replace with your repo URL
     cd WhisperCast
     ```
 
@@ -72,13 +89,19 @@
     python -m venv venv
     ```
     Activate the environment:
-    *   Windows (PowerShell/CMD): `.\venv\Scripts\Activate.ps1` (for PowerShell) or `.\venv\Scripts\activate.bat` (for CMD)
+    *   Windows (PowerShell/CMD): `.\\\\venv\\\\Scripts\\\\Activate.ps1` (for PowerShell) or `.\\\\venv\\\\Scripts\\\\activate.bat` (for CMD)
     *   macOS/Linux: `source venv/bin/activate`
 
-3.  **Install Dependencies**:
+3.  **Install the Package**:
+    For regular use:
     ```bash
-    pip install -r requirements.txt
+    pip install .
     ```
+    For development (editable install with testing dependencies):
+    ```bash
+    pip install -e .[dev]
+    ```
+    *Dependencies are managed in `pyproject.toml`.*
     *Note: `torch` installation might require specific commands depending on your CUDA version if you plan to use GPU. Refer to the [PyTorch official website](https://pytorch.org/get-started/locally/) for instructions.*
 
 4.  **Set Up Environment Variables**:
@@ -92,13 +115,13 @@
         ```
     *   Open the `.env` file and add your credentials:
         *   `OPENAI_API_KEY`: Your API key from OpenAI (if using `openai_api` mode).
-        *   `HUGGING_FACE_ACCESS_TOKEN`: Your access token from Hugging Face (required for `pyannote.audio` models). You can create one [here](https://huggingface.co/settings/tokens).
+        *   `HUGGING_FACE_ACCESS_TOKEN`: Your access token from Hugging Face (required for `pyannote.audio` models if `--enable-diarization` is used). You can create one [here](https://huggingface.co/settings/tokens). Ensure you have accepted the terms of service for the diarization models (e.g., `pyannote/speaker-diarization-3.1` and `pyannote/segmentation-3.0`) on the Hugging Face website.
 
 ---
 
 ## ⚙️ Configuration
 
-The primary configuration file is `config.py`. You can modify it to change the behavior of the script:
+The primary configuration file is `src/whispercast/config.py`. You can modify it to change the behavior of the script:
 
 *   `TRANSCRIPTION_MODE`: 
     *   `'local'`: Use Hugging Face Transformers for local transcription.
@@ -107,58 +130,51 @@ The primary configuration file is `config.py`. You can modify it to change the b
 *   `OPENAI_MODEL_NAME`: Model name for OpenAI API (e.g., `"whisper-1"`).
 *   `DEVICE`: Computation device for local models (`"cuda"` for GPU, `"cpu"` for CPU).
 *   `FFMPEG_EXECUTABLE_PATH`: Absolute path to your FFmpeg `bin` directory if it's not in the system PATH. 
-    *   Example (Windows): `r"C:\path\to\ffmpeg\bin"`
+    *   Example (Windows): `r"C:\\\\path\\\\to\\\\ffmpeg\\\\bin"`
     *   Example (Linux/macOS): `"/usr/local/bin/ffmpeg"` (often not needed if FFmpeg is installed via a package manager and in PATH).
-*   `HUGGING_FACE_ACCESS_TOKEN`: Can also be set here as an alternative to the `.env` file, though `.env` is preferred for sensitive keys.
+*   `HUGGING_FACE_ACCESS_TOKEN`: Can also be set here as an alternative to the `.env` file for the diarization feature, though `.env` is preferred for sensitive keys.
 
 ---
 
 ## ▶️ Usage
 
-Run the main script from the root directory of the project:
-
-```powershell
-python main.py [audio_file_path] [output_csv_path]
-```
-
-**Arguments:**
-
-*   `audio_file_path` (optional): Path to the input `.wav` audio file.
-    *   Default: `harvard.wav/harvard.wav` (relative to the script location).
-*   `output_csv_path` (optional): Path to save the output CSV file.
-    *   Default: `output/output_YYYY-MM-DD_HH-MM-SS_AMPM.csv` (timestamped, in the `output` directory).
-
-**Example:**
-
-```powershell
-python main.py "path\to\your\audio.wav" "path\to\your\output.csv"
-```
-
-If no arguments are provided, the script will use the default input audio (`harvard.wav/harvard.wav`) and generate a timestamped output CSV in the `output/` directory.
-
-### Command-Line Interface (CLI)
-
-You can run WhisperCast from the command line:
+Once the package is installed, you can use the `whispercast` command-line tool:
 
 ```bash
-whispercast /path/to/your/audio.wav /path/to/your/output.csv --enable-diarization
-```
-
-Or, if installed as a package:
-
-```bash
-whispercast input.wav output.csv --enable-diarization
+whispercast [AUDIO_FILE] [OUTPUT_CSV] [--enable-diarization] [--version]
 ```
 
 **Positional Arguments:**
-*   `audio_file`: Path to the input audio file (e.g., `.wav`). Defaults to `harvard.wav` in the project root.
-*   `output_csv`: Path to save the output CSV file. Defaults to a timestamped file in the `output/` directory.
+
+*   `audio_file` (optional): Path to the input audio file (e.g., `.wav`). 
+    *   Default: Uses the `harvard.wav` sample included in the package (`src/whispercast/sample_data/harvard.wav`).
+*   `output_csv` (optional): Path to save the output CSV file. 
+    *   Default: `output/output_YYYY-MM-DD_HH-MM-SS_AMPM.csv` (timestamped, in an `output` directory created in the current working directory where you run the command).
 
 **Optional Arguments:**
-*   `--enable-diarization`: Add this flag to attempt speaker diarization.
-    *   Requires `pyannote.audio` to be installed (it's in `pyproject.toml` dependencies).
-    *   Requires a Hugging Face User Access Token with `read` permissions. Set this token as an environment variable `HUGGING_FACE_ACCESS_TOKEN` or in `src/whispercast/config.py`.
-    *   You must also accept the user conditions for the diarization models on Hugging Face (e.g., `pyannote/speaker-diarization-3.1` and `pyannote/segmentation-3.0`). Visit the model pages on Hugging Face to do this.
+
+*   `--enable-diarization`: If provided, attempts speaker diarization using `pyannote.audio`.
+    *   Requires a Hugging Face User Access Token (see Setup). 
+    *   Ensure you have accepted the EULA for `pyannote/speaker-diarization-3.1` and `pyannote/segmentation-3.0` on Hugging Face.
+*   `--version`: Displays the version of WhisperCast and exits.
+*   `-h, --help`: Show a help message and exit.
+
+**Examples:**
+
+1.  Transcribe the sample audio with default settings (no diarization):
+    ```bash
+    whispercast
+    ```
+
+2.  Transcribe a specific audio file and save to a specific CSV path, enabling diarization:
+    ```bash
+    whispercast "path/to/your/audio.wav" "path/to/your/output.csv" --enable-diarization
+    ```
+
+3.  Check the installed version:
+    ```bash
+    whispercast --version
+    ```
 
 ---
 
@@ -166,19 +182,22 @@ whispercast input.wav output.csv --enable-diarization
 
 The script generates a CSV file with the following columns:
 
-*   **Speaker**: Identifier for the speaker (e.g., `SPEAKER_00`, `SPEAKER_01`, or `Segment_X` if diarization fails or is not fully effective).
+*   **Speaker**: Identifier for the speaker (e.g., `SPEAKER_00`, `SPEAKER_01`). If diarization is not enabled or fails, this might be a generic segment identifier (e.g., `Segment_0`).
 *   **Start Time**: Start time of the conversation segment in seconds.
 *   **End Time**: End time of the conversation segment in seconds.
 *   **Conversation**: The transcribed text for that segment.
 
-**Example CSV Row:**
+**Example CSV Row (with diarization):**
 
 ```csv
 Speaker,Start Time,End Time,Conversation
 SPEAKER_00,0.53,2.78,The stale smell of old beer lingers.
 SPEAKER_01,3.01,5.52,It takes heat to bring out the odor.
 ```
-*(Note: Timestamp accuracy for OpenAI API mode is currently under review and may show "N/A".)*
+
+**Timestamp Handling:**
+*   **Local Mode & Diarization Enabled (any mode):** Timestamps are generally segment-level based on Whisper's output or aligned with diarization segments.
+*   **OpenAI API Mode (Diarization Disabled):** Word-level timestamps are utilized to provide more granular start and end times for segments. The system will still segment the transcript, but the segment boundaries will be based on word timings.
 
 ---
 
@@ -187,34 +206,37 @@ SPEAKER_01,3.01,5.52,It takes heat to bring out the odor.
 ### Transcription
 
 *   **Local Mode (`transformers`)**:
-    *   Downloads and runs Whisper models directly on your machine.
+    *   Downloads and runs Whisper models (e.g., `openai/whisper-large-v3`) directly on your machine.
     *   Offers more control over model versions and offline capability.
     *   Performance depends on your hardware (CPU/GPU).
-    *   Uses `return_timestamps="segment"` for segment-level timestamps.
+    *   Uses `return_timestamps="segments"` for segment-level timestamps.
 *   **OpenAI API Mode (`openai_api`)**:
-    *   Sends audio to OpenAI's servers for transcription.
+    *   Sends audio to OpenAI's servers for transcription using models like `whisper-1`.
     *   Can be faster and may offer access to the latest model improvements without local setup.
     *   Requires an internet connection and an OpenAI API key.
-    *   Requests `verbose_json` with `segment` and `word` granularities for timestamps. *(Current issue: Timestamps might appear as "N/A" in the output for this mode, which is being investigated.)*
+    *   Requests `timestamp_granularities=["word", "segment"]`. Word-level timestamps are used for segmenting if diarization is disabled; otherwise, segment-level or diarization-aligned timestamps are used.
 
 ### Speaker Diarization
 
-*   Utilizes `pyannote.audio` library, specifically the `pyannote/speaker-diarization-pytorch` pretrained pipeline.
+*   Optionally enabled via the `--enable-diarization` flag.
+*   Utilizes `pyannote.audio` library, specifically models like `pyannote/speaker-diarization-3.1`.
 *   Processes the audio to identify different speakers and the time segments they speak.
 *   The diarization results are then aligned with the transcription segments based on timestamp overlap to assign speaker labels.
-*   Requires a Hugging Face access token for downloading the diarization model.
+*   Requires a Hugging Face access token and acceptance of model EULAs on Hugging Face.
 
 ---
 
 ## 🗺️ Roadmap & Future Enhancements
 
-*   ✅ **Fix Timestamp Extraction for OpenAI API Mode**: Ensure accurate segment start/end times are captured.
+*   ✅ **Timestamp Accuracy & Granularity**: Continuously improve timestamp accuracy. Word-level timestamps from OpenAI API are now parsed when diarization is off. Further validation and refinement needed, especially in alignment with diarization.
 *   🌐 **Implement Translation Feature**: Add functionality to translate the transcribed text into specified languages.
 *   🗣️ **Refine Speaker Diarization Alignment**: Improve the logic for matching diarization turns with transcription segments, especially for overlapping speech or short utterances.
-*   🎧 **Support for More Audio Formats**: Extend compatibility beyond `.wav` files.
+*   🎧 **Support for More Audio Formats**: Extend compatibility beyond `.wav` files (requires checking FFmpeg capabilities and potential library adjustments).
 *   🖥️ **User Interface**: Develop a simple GUI (e.g., using Streamlit or Gradio) for easier interaction.
-*   🧪 **Comprehensive Testing**: Thoroughly test with diverse audio samples, including mixed languages (English, Hokkien, Cantonese as per original requirements).
+*   🧪 **Comprehensive Testing**: Thoroughly test with diverse audio samples, including mixed languages and noisy environments. Expand `pytest` suite.
 *   📄 **Detailed Logging**: Implement more robust logging for easier debugging and monitoring.
+*   📦 **Publish to PyPI**: Make the package easily installable via `pip install whispercast`.
+*   Formalize versioning (e.g., using `git tags` and a tool like `setuptools_scm`).
 
 ---
 
