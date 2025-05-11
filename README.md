@@ -63,8 +63,8 @@
 
 1.  **Clone the Repository**:
     ```bash
-    git clone <your-repository-url>
-    cd WhisperCast # Or your project directory name
+    git clone https://github.com/mohameddhameem/WhisperCast
+    cd WhisperCast
     ```
 
 2.  **Create a Virtual Environment** (Recommended):
@@ -135,6 +135,30 @@ python main.py "path\to\your\audio.wav" "path\to\your\output.csv"
 ```
 
 If no arguments are provided, the script will use the default input audio (`harvard.wav/harvard.wav`) and generate a timestamped output CSV in the `output/` directory.
+
+### Command-Line Interface (CLI)
+
+You can run WhisperCast from the command line:
+
+```bash
+whispercast /path/to/your/audio.wav /path/to/your/output.csv --enable-diarization
+```
+
+Or, if installed as a package:
+
+```bash
+whispercast input.wav output.csv --enable-diarization
+```
+
+**Positional Arguments:**
+*   `audio_file`: Path to the input audio file (e.g., `.wav`). Defaults to `harvard.wav` in the project root.
+*   `output_csv`: Path to save the output CSV file. Defaults to a timestamped file in the `output/` directory.
+
+**Optional Arguments:**
+*   `--enable-diarization`: Add this flag to attempt speaker diarization.
+    *   Requires `pyannote.audio` to be installed (it's in `pyproject.toml` dependencies).
+    *   Requires a Hugging Face User Access Token with `read` permissions. Set this token as an environment variable `HUGGING_FACE_ACCESS_TOKEN` or in `src/whispercast/config.py`.
+    *   You must also accept the user conditions for the diarization models on Hugging Face (e.g., `pyannote/speaker-diarization-3.1` and `pyannote/segmentation-3.0`). Visit the model pages on Hugging Face to do this.
 
 ---
 

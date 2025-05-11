@@ -58,10 +58,10 @@ except ImportError:
 
 # Attempt to import OpenAI library, fail gracefully if not in openai_api mode or not installed
 try:
-    import openai # Keep for 'openai' in globals() check
+    import openai # Keep for \'openai\' in globals() check
 except ImportError:
     if config.TRANSCRIPTION_MODE == 'openai_api':
-        print("INFO: 'openai' library not found. Please install it if using OpenAI API mode: pip install openai")
+        print("INFO: \'openai\' library not found. Please install it if using OpenAI API mode: pip install openai")
 
 def main():
     # Define default paths
@@ -81,6 +81,11 @@ def main():
                         help=f"Path to the input .wav audio file (default: {default_audio_path}).")
     parser.add_argument("output_csv", nargs='?', default=default_output_csv_path,
                         help=f"Path to save the output CSV file (default: {default_output_csv_path}).")
+    parser.add_argument(
+        "--enable-diarization",
+        action="store_true", # Makes it a boolean flag, default is False
+        help="Enable speaker diarization. Requires pyannote.audio and a Hugging Face token."
+    )
     args = parser.parse_args()
 
     print(f"INFO: Using input audio file: {args.audio_file}")
@@ -114,16 +119,19 @@ def main():
 
     # --- Speaker Diarization (Optional) ---
     diarization_result = None
-    # pyannote_available flag is now set globally based on successful import
-    if pyannote_available:
-        hf_token = os.getenv("HUGGING_FACE_ACCESS_TOKEN") or config.HUGGING_FACE_ACCESS_TOKEN
-        if not hf_token or hf_token == "YOUR_HUGGING_FACE_TOKEN_HERE":
-            print("INFO: HUGGING_FACE_ACCESS_TOKEN not found or is a placeholder. Diarization might fail for gated models.")
-        # Pass the pyannote_available flag to the core function, although it also checks internally.
-        # The main check should be here before calling.
-        diarization_result = diarize_audio_pyannote(args.audio_file, hf_token, pyannote_available)
+    if args.enable_diarization:
+        if pyannote_available:
+            print("INFO: Speaker diarization enabled by user.")
+            hf_token = os.getenv("HUGGING_FACE_ACCESS_TOKEN") or config.HUGGING_FACE_ACCESS_TOKEN
+            if not hf_token or hf_token == "YOUR_HUGGING_FACE_TOKEN_HERE":
+                print("INFO: HUGGING_FACE_ACCESS_TOKEN not found or is a placeholder. Diarization might fail for gated models.")
+            # The pyannote_available flag is checked before calling.
+            # The core diarization function also has its own checks.
+            diarization_result = diarize_audio_pyannote(args.audio_file, hf_token, pyannote_available)
+        else:
+            print("WARNING: Speaker diarization was requested, but pyannote.audio is not available. Skipping diarization.")
     else:
-        print("INFO: pyannote.audio not available, skipping speaker diarization.")
+        print("INFO: Speaker diarization not enabled. Skipping.")
 
     # --- Process and Save --- 
     if transcription_result:
