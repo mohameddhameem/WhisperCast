@@ -1,10 +1,33 @@
+"""Handles speaker diarization using pyannote.audio.
+
+This module provides the `perform_diarization` function to identify speaker segments
+in an audio file. It relies on the `pyannote.audio` library and may require a
+Hugging Face access token for certain pre-trained pipelines.
+"""
+
 from pyannote.audio import Pipeline
 # Was: from .. import config # Not strictly needed as config values are passed as arguments
 
-def diarize_audio_pyannote(audio_file_path, hf_token, pyannote_available_flag):
+def perform_diarization(audio_file_path, hf_token, pyannote_available_flag):
     """
-    Performs speaker diarization using pyannote.audio.
-    Returns a list of speaker segments with start, end, and speaker label.
+    Performs speaker diarization using the `pyannote.audio` library.
+
+    This function identifies speaker turns in an audio file and returns a list
+    of segments, each with a start time, end time, and speaker label.
+
+    Args:
+        audio_file_path (str): Path to the input audio file.
+        hf_token (str or None): Hugging Face access token. Required for some
+                                `pyannote.audio` pipelines, especially gated models.
+                                Can be None if the pipeline does not require authentication.
+        pyannote_available_flag (bool): A flag indicating if `pyannote.audio` was successfully
+                                      imported by the caller. If False, diarization is skipped.
+
+    Returns:
+        list[dict] or None: A list of dictionaries, where each dictionary represents a speaker
+                            segment and contains 'start' (float), 'end' (float), and
+                            'speaker' (str) keys. Returns None if diarization fails or
+                            `pyannote.audio` is unavailable.
     """
     if not pyannote_available_flag: # Check the flag passed from cli.py
         print("ERROR: pyannote.audio is not available (checked by caller). Cannot perform diarization.")

@@ -19,8 +19,6 @@ classifiers = [
     "Topic :: Multimedia :: Sound/Audio :: Speech",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -53,8 +51,11 @@ include = ["whispercast*"] # Finds the whispercast package and any sub-packages
 namespaces = false
 
 # Example for optional dependencies (e.g., for development)
-# [project.optional-dependencies]
-# dev = ["pytest", "flake8", "black"]
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=3.0"
+]
 
 # Optional: for including non-code files with your package
 [tool.setuptools.package-data]

@@ -1,7 +1,21 @@
+"""Command-Line Interface for WhisperCast.
+
+This module provides the command-line entry point for the WhisperCast application.
+It handles argument parsing, initializes the transcription and diarization processes
+based on user input and configuration, and saves the output.
+
+Supports transcription via local Hugging Face models or the OpenAI API, with
+optional speaker diarization using pyannote.audio.
+
+Usage:
+  whispercast [audio_file] [output_csv] [--enable-diarization] [--version]
+"""
+
 import argparse
 import os
 from . import config # New relative import for the package
 import importlib.resources
+from . import __version__ # Import the version from __init__.py
 
 # --- Prepend FFmpeg path to environment PATH ---
 if config.FFMPEG_EXECUTABLE_PATH and os.path.isdir(config.FFMPEG_EXECUTABLE_PATH):
@@ -18,9 +32,9 @@ from dotenv import load_dotenv
 from datetime import datetime
 load_dotenv()
 # Import core functionalities
-from .core.transcription import transcribe_audio_local, transcribe_audio_openai_api
-from .core.diarization import diarize_audio_pyannote
-from .core.processing import process_transcription_to_dataframe
+from .core.transcription import transcribe_audio # Unified function
+from .core.diarization import perform_diarization # Renamed from diarize_audio_pyannote
+from .core.processing import process_transcription_and_diarization # Renamed from process_transcription_to_dataframe
 
 # Flags to track availability of local mode dependencies
 torch_available = False
@@ -65,6 +79,19 @@ except ImportError:
         print("INFO: \'openai\' library not found. Please install it if using OpenAI API mode: pip install openai")
 
 def main():
+    """Main function for the WhisperCast CLI.
+
+    Parses command-line arguments, sets up default paths, and orchestrates
+    the audio transcription and optional diarization process.
+
+    The process involves:
+    1. Setting up paths for input audio and output CSV.
+    2. Parsing CLI arguments for audio file, output file, and diarization flag.
+    3. Performing transcription based on the mode specified in `config.py` (local or openai_api).
+    4. Optionally performing speaker diarization if requested and `pyannote.audio` is available.
+    5. Processing the results into a pandas DataFrame.
+    6. Saving the DataFrame to a CSV file.
+    """
     # Define default paths
     # script_dir = os.path.dirname(os.path.abspath(__file__)) # No longer needed for default_audio_path
     
@@ -96,6 +123,12 @@ def main():
 
 
     parser = argparse.ArgumentParser(description="Transcribe audio and output to CSV.")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show program's version number and exit."
+    )
     parser.add_argument("audio_file", nargs='?', default=default_audio_path, 
                         help=f"Path to the input .wav audio file (default: {default_audio_path}).")
     parser.add_argument("output_csv", nargs='?', default=default_output_csv_path,
@@ -129,9 +162,20 @@ def main():
             if not transformers_components_available:
                 print("DEBUG: Components from 'transformers' (e.g., AutoModelForSpeechSeq2Seq) were not successfully imported.")
             return
-        transcription_result = transcribe_audio_local(args.audio_file, config.LOCAL_MODEL_ID, config.LOCAL_MODEL_DEVICE)
+        # Corrected: Call the unified transcribe_audio function for local mode
+        transcription_result = transcribe_audio(
+            audio_file_path=args.audio_file,
+            mode='local',
+            local_model_id=config.LOCAL_MODEL_ID,
+            local_model_device=config.LOCAL_MODEL_DEVICE
+        )
     elif config.TRANSCRIPTION_MODE == 'openai_api':
-        transcription_result = transcribe_audio_openai_api(args.audio_file, config.OPENAI_API_MODEL)
+        # Corrected: Call the unified transcribe_audio function for OpenAI API mode
+        transcription_result = transcribe_audio(
+            audio_file_path=args.audio_file,
+            mode='openai_api',
+            openai_api_model=config.OPENAI_API_MODEL
+        )
     else:
         print(f"ERROR: Invalid TRANSCRIPTION_MODE '{config.TRANSCRIPTION_MODE}' in config.py. Choose 'local' or 'openai_api'.")
         return
@@ -146,7 +190,7 @@ def main():
                 print("INFO: HUGGING_FACE_ACCESS_TOKEN not found or is a placeholder. Diarization might fail for gated models.")
             # The pyannote_available flag is checked before calling.
             # The core diarization function also has its own checks.
-            diarization_result = diarize_audio_pyannote(args.audio_file, hf_token, pyannote_available)
+            diarization_result = perform_diarization(args.audio_file, hf_token, pyannote_available) # Corrected: use perform_diarization
         else:
             print("WARNING: Speaker diarization was requested, but pyannote.audio is not available. Skipping diarization.")
     else:
@@ -154,7 +198,7 @@ def main():
 
     # --- Process and Save --- 
     if transcription_result:
-        df = process_transcription_to_dataframe(transcription_result, config.TRANSCRIPTION_MODE, diarization_result)
+        df = process_transcription_and_diarization(transcription_result, config.TRANSCRIPTION_MODE, diarization_result) # Corrected: use process_transcription_and_diarization
         if not df.empty:
             df.to_csv(args.output_csv, index=False, encoding='utf-8')
             print(f"INFO: Transcription saved to {args.output_csv}")
