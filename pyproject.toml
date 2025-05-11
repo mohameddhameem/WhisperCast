@@ -1,7 +1,6 @@
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
-backend-path = "."
 
 [project]
 name = "whispercast"
@@ -11,15 +10,14 @@ authors = [
 ]
 description = "WhisperCast is a unified speech intelligence toolkit powered by OpenAI and Hugging Face Whisper models."
 readme = "README.md"
+license = "MIT" 
 requires-python = ">=3.10"
-license = { text = "MIT License" }
 
 classifiers = [
     "Development Status :: 3 - Alpha", # Or "4 - Beta", "5 - Production/Stable"
     "Intended Audience :: Developers",
     "Topic :: Multimedia :: Sound/Audio :: Speech",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -57,3 +55,7 @@ namespaces = false
 # Example for optional dependencies (e.g., for development)
 # [project.optional-dependencies]
 # dev = ["pytest", "flake8", "black"]
+
+# Optional: for including non-code files with your package
+[tool.setuptools.package-data]
+whispercast = ["sample_data/*.wav"]

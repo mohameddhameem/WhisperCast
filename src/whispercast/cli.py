@@ -1,6 +1,7 @@
 import argparse
 import os
 from . import config # New relative import for the package
+import importlib.resources
 
 # --- Prepend FFmpeg path to environment PATH ---
 if config.FFMPEG_EXECUTABLE_PATH and os.path.isdir(config.FFMPEG_EXECUTABLE_PATH):
@@ -65,16 +66,34 @@ except ImportError:
 
 def main():
     # Define default paths
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Adjusted default_audio_path to navigate up from src/whispercast
-    default_audio_path = os.path.join(script_dir, "..", "..", "harvard.wav", "harvard.wav") 
+    # script_dir = os.path.dirname(os.path.abspath(__file__)) # No longer needed for default_audio_path
     
+    # Use importlib.resources to get the path to the sample audio file
+    try:
+        default_audio_path_ref = importlib.resources.files('whispercast.sample_data').joinpath('harvard.wav')
+        # For Python < 3.9, importlib.resources.path was used.
+        # For Python >= 3.9, files() returns a Traversable object.
+        # To get a usable file system path, we enter its context if it's a temporary file,
+        # or just use it directly if it's a real file path.
+        # Given our setup, it should be a direct path within the package.
+        with importlib.resources.as_file(default_audio_path_ref) as path:
+            default_audio_path = str(path)
+    except Exception as e:
+        print(f"WARNING: Could not locate default audio file using importlib.resources: {e}")
+        # Fallback or error, though this should ideally not happen if packaged correctly
+        # For a CLI tool, a fallback might be to not have a default or point to a placeholder.
+        # Let's set it to a non-existent placeholder to indicate an issue if it fails.
+        default_audio_path = "default_sample_audio_not_found.wav"
+
+
     # Generate default CSV filename with timestamp
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%I-%M-%S_%p") # e.g., 2025-05-11_03-45-20_PM
     default_csv_filename = f"output_{timestamp}.csv"
-    # Adjusted default_output_csv_path to navigate up from src/whispercast
-    default_output_csv_path = os.path.join(script_dir, "..", "..", "output", default_csv_filename)
+    
+    # Default output path relative to the current working directory
+    default_output_csv_path = os.path.join(os.getcwd(), "output", default_csv_filename)
+
 
     parser = argparse.ArgumentParser(description="Transcribe audio and output to CSV.")
     parser.add_argument("audio_file", nargs='?', default=default_audio_path, 

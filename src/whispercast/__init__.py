@@ -10,7 +10,7 @@ from .cli import main as run_whispercast_pipeline
 # from .core.processing import process_transcription_to_dataframe
 
 # Expose configuration variables or objects if useful
-# from .config import TRANSCRIPTION_MODE, LOCAL_MODEL_ID # Example
+from .config import TRANSCRIPTION_MODE, OPENAI_API_MODEL, LOCAL_MODEL_ID, LOCAL_MODEL_DEVICE, HUGGING_FACE_ACCESS_TOKEN, FFMPEG_EXECUTABLE_PATH
 
 __version__ = "0.1.0"  # Keep in sync with pyproject.toml
 
