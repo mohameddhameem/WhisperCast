@@ -54,7 +54,7 @@ namespaces = false
 # Add setuptools_scm configuration
 [tool.setuptools_scm]
 write_to = "src/whispercast/_version.py" # Tells setuptools_scm to write the version to this file
-write_to_template = "__version__ = \\"{version}\\""
+write_to_template = '__version__ = \\"{version}\\"' # Corrected escaping for inner double quotes
 # Fallback version if not a git repo (e.g. sdist)
 fallback_version = "0.0.0.dev0" 
 
