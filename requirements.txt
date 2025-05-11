@@ -1,0 +1,11 @@
+openai
+pandas
+python-dotenv
+transformers
+torch
+torchaudio
+librosa
+pyannote.audio
+# For GPU support with transformers, you might need:
+# accelerate
+# bitsandbytes (if using quantization)
