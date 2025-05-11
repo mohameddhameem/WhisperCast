@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+backend-path = "."
+
+[project]
+name = "whispercast"
+version = "0.1.0" 
+authors = [
+    { name = "Mohamed Dhameem", email = "dhameem.study@example.com" },
+]
+description = "WhisperCast is a unified speech intelligence toolkit powered by OpenAI and Hugging Face Whisper models."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT License" }
+
+classifiers = [
+    "Development Status :: 3 - Alpha", # Or "4 - Beta", "5 - Production/Stable"
+    "Intended Audience :: Developers",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "pandas",
+    "python-dotenv",
+    "openai",
+    "transformers",
+    "torch",
+    "torchaudio",
+    "librosa",
+    "pyannote.audio>=3.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/mohameddhameem/whispercast" 
+Repository = "https://github.com/mohameddhameem/whispercast"
+
+# This makes your script runnable from the command line after installation
+[project.scripts]
+whispercast = "whispercast.cli:main"
+
+# This tells setuptools where to find your package in the src layout
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["whispercast*"] # Finds the whispercast package and any sub-packages
+namespaces = false
+
+# Example for optional dependencies (e.g., for development)
+# [project.optional-dependencies]
+# dev = ["pytest", "flake8", "black"]
