@@ -13,12 +13,13 @@ Core functionalities include:
 The package can also be used as a command-line tool via the `whispercast` script.
 """
 
+# Import the dynamically generated version
+from ._version import __version__
+
 # Expose configuration variables or objects if useful
-# from .config import TRANSCRIPTION_MODE, OPENAI_API_MODEL, LOCAL_MODEL_ID, LOCAL_MODEL_DEVICE, HUGGING_FACE_ACCESS_TOKEN, FFMPEG_EXECUTABLE_PATH
+from .config import TRANSCRIPTION_MODE, OPENAI_API_MODEL, LOCAL_MODEL_ID, LOCAL_MODEL_DEVICE, HUGGING_FACE_ACCESS_TOKEN, FFMPEG_EXECUTABLE_PATH
 # Commented out as these are not typically part of a library's public API surface directly from __init__
 # They are used internally by the modules.
-
-__version__ = "0.1.0"  # Keep in sync with pyproject.toml
 
 # Option 1: Expose core functionalities directly
 from .core import transcribe_audio, perform_diarization, process_transcription_and_diarization

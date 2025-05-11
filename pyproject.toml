@@ -1,10 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0", "wheel", "setuptools_scm>=8.0"] # Added setuptools_scm
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "whispercast"
-version = "0.1.0" 
+# version = "0.1.0" # Removed static version
+dynamic = ["version"] # Added to indicate version is dynamic
 authors = [
     { name = "Mohamed Dhameem", email = "dhameem.study@example.com" },
 ]
@@ -49,6 +50,13 @@ whispercast = "whispercast.cli:main"
 where = ["src"]
 include = ["whispercast*"] # Finds the whispercast package and any sub-packages
 namespaces = false
+
+# Add setuptools_scm configuration
+[tool.setuptools_scm]
+write_to = "src/whispercast/_version.py" # Tells setuptools_scm to write the version to this file
+write_to_template = "__version__ = \\"{version}\\""
+# Fallback version if not a git repo (e.g. sdist)
+fallback_version = "0.0.0.dev0" 
 
 # Example for optional dependencies (e.g., for development)
 [project.optional-dependencies]
